@@ -33,3 +33,6 @@
 [submodule "3rdparty/lz4/lz4"]
 	path = 3rdparty/lz4/lz4
 	url = https://github.com/lz4/lz4
+[submodule "3rdparty/rpclib"]
+	path = 3rdparty/rpclib
+	url = git@github.com:rpclib/rpclib.git
