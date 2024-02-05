@@ -18,6 +18,10 @@
 #include <bit>
 #include <cmath>
 
+//
+#include "rpc/server.h"
+
+
 static constexpr const char* CONTROLLER_DB_FILENAME = "game_controller_db.txt";
 
 static constexpr const char* s_sdl_axis_names[] = {
@@ -258,46 +262,35 @@ void RemoteInputSource::SetHints()
 
 bool RemoteInputSource::InitializeSubsystem()
 {
-	if (SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) < 0)
-	{
-		Console.Error("SDL_InitSubSystem(SDL_INIT_JOYSTICK |SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC) failed");
-		return false;
-	}
+    server = new rpc::server(port)
+    
+    server->bind("event", [](string const& s) {
+        pending_action.push_back();
+        return pending_action.size();
+    });
 
-	SDL_LogSetOutputFunction(SDLLogCallback, nullptr);
-#ifdef PCSX2_DEVBUILD
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
-#else
-	SDL_LogSetAllPriority(SDL_LOG_PRIORITY_INFO);
-#endif
+    // run this in a thread
+    [this]() {
+        server->run();
+    }
 
-	// we should open the controllers as the connected events come in, so no need to do any more here
-	m_sdl_subsystem_initialized = true;
-	Console.WriteLn(Color_StrongGreen, fmt::format("RemoteInputSource: {} controller mappings are loaded.", SDL_GameControllerNumMappings()));
+	Console.WriteLn(Color_StrongGreen, fmt::format("RemoteInputSource: is initialized"));
 	return true;
 }
 
 void RemoteInputSource::ShutdownSubsystem()
 {
-	while (!m_controllers.empty())
-		CloseDevice(m_controllers.begin()->joystick_id);
-
-	if (m_sdl_subsystem_initialized)
-	{
-		SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER | SDL_INIT_HAPTIC);
-		m_sdl_subsystem_initialized = false;
-	}
+    if (server != nullptr) {
+        server->stop();
+        delete server;
+    }
 }
 
 void RemoteInputSource::PollEvents()
 {
-	for (;;)
+	for (SDL_Event const& ev: pending_action)
 	{
-		SDL_Event ev;
-		if (SDL_PollEvent(&ev))
-			ProcessSDLEvent(&ev);
-		else
-			break;
+        ProcessSDLEvent(&ev);
 	}
 }
 

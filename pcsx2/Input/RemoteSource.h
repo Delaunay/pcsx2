@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: LGPL-3.0+
 
 #pragma once
+
+
 #include "Input/InputSource.h"
 #include "SDL.h"
 #include <array>
@@ -90,4 +92,7 @@ private:
 	bool m_controller_raw_mode = false;
 	std::array<u32, MAX_LED_COLORS> m_led_colors{};
 	std::vector<std::pair<std::string, std::string>> m_sdl_hints;
+
+    std::vector<SDL_Event> pending_action;
+    class rpc::server* server = nullptr;
 };
