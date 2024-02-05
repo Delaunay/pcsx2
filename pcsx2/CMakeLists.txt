@@ -52,6 +52,9 @@ if(WIN32)
 	)
 endif(WIN32)
 
+target_compile_definitions(PCSX2_FLAGS INTERFACE USE_REMOTE_INPUT)
+target_link_libraries(PCSX2_FLAGS INTERFACE rpclib)
+
 # Main pcsx2 source
 set(pcsx2Sources
 	Achievements.cpp
